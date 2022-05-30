@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <ItemGroup>
+        <PackageReference Include="DalamudPackager" Version="$(VersionDalamudPackager)" />
+    </ItemGroup>
+
+    <PropertyGroup>
+        <PackagerTargetFile />
+    </PropertyGroup>
+    <Target Name="DefaultDalamudPackagerDebug" />
+    <Target Name="DefaultDalamudPackagerRelease" />
+
+    <Target Name="DalamudPackagerConfigure">
+        <PropertyGroup>
+            <DalamudPackagerOutputPath Condition="'$(DalamudPackagerOutputPath)' == ''">$(OutputPath)</DalamudPackagerOutputPath>
+            <DalamudPackagerOutputName Condition="'$(DalamudPackagerOutputName)' == ''">$(AssemblyName)</DalamudPackagerOutputName>
+            <DalamudPackagerMakeZip Condition="'$(DalamudPackagerMakeZip)' == ''">true</DalamudPackagerMakeZip>
+        </PropertyGroup>
+    </Target>
+
+    <Target Name="DalamudPackagerRun">
+        <DalamudPackager
+                ProjectDir="$(ProjectDir)"
+                OutputPath="$(DalamudPackagerOutputPath)"
+                AssemblyName="$(DalamudPackagerOutputName)"
+                MakeZip="$(DalamudPackagerMakeZip)" />
+    </Target>
+
+    <ItemGroup>
+        <_DalamudPackagerDependsOn Include="DalamudPackagerConfigure" />
+        <_DalamudPackagerDependsOn Include="DalamudPackagerRun" />
+    </ItemGroup>
+    <Target Name="DalamudPackager" DependsOnTargets="@(_DalamudPackagerDependsOn)" AfterTargets="Build;ILRepack" />
+</Project>

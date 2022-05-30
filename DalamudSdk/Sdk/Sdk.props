@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <UsingDalamudSdk>true</UsingDalamudSdk>
+        <DalamudSdkIncludePath>$(MSBuildThisFileDirectory.TrimEnd('\'))</DalamudSdkIncludePath>
+        <MSBuildAllProjects Condition="'$(MSBuildToolsVersion)' != 'Current'">$(MSBuildAllProjects);$(MsBuildThisFileFullPath)</MSBuildAllProjects>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <ManagedLanguageTargetsGotImported Condition="'$(MSBuildProjectExtension)' == '.csproj'">true</ManagedLanguageTargetsGotImported>
+        <ManagedLanguageTargetsGotImported Condition="'$(MSBuildProjectExtension)' == '.vbproj'">true</ManagedLanguageTargetsGotImported>
+        <ManagedLanguageTargetsGotImported Condition="'$(MSBuildProjectExtension)' == '.fsproj'">true</ManagedLanguageTargetsGotImported>
+    </PropertyGroup>
+
+    <Import Project="$(DalamudSdkIncludePath)\dalamud\DalamudPlugin.props" />
+    <Import Project="$(DalamudSdkIncludePath)\dalamud\DalamudDeps.props" />
+    <Import Project="$(DalamudSdkIncludePath)\dalamud\DalamudAdditionalImports.props" />
+
+    <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" Condition="'$(MicrosoftCommonPropsHasBeenImported)' != 'true'"/>
+
+    <Target Name="CompileDesignTime" />
+</Project>

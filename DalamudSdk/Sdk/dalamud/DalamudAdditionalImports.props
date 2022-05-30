@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <DalamudSdkAdditionalImportsDir Condition="'$(DalamudSdkAdditionalImportsDir)' == ''">$(MSBuildProjectDirectory)\Build</DalamudSdkAdditionalImportsDir>
+    </PropertyGroup>
+
+    <ImportGroup Condition="Exists('$(DalamudSdkAdditionalImportsDir)\')">
+        <Import Project="$(DalamudSdkAdditionalImportsDir)\*.props" />
+        <Import Project="$(DalamudSdkAdditionalImportsDir)\*.ImportBefore.targets" />
+        <Import Project="$(DalamudSdkAdditionalImportsDir)\ImportBefore\*.props" />
+        <Import Project="$(DalamudSdkAdditionalImportsDir)\ImportBefore\*.targets" />
+    </ImportGroup>
+</Project>

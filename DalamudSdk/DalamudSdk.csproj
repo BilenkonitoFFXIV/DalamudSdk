@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.Build.NoTargets/3.2.14">
+    <PropertyGroup>
+        <ProductName>DalamudSDK</ProductName>
+        <PackageId>DalamudSdk</PackageId>
+        <PackageType>MSBuildSdk</PackageType>
+        <Title>Dalamud MSBuild SDK</Title>
+        <Description>MSBuild SDK Project support for goatcorp's Dalamud.</Description>
+        <Authors>Bilenkonito</Authors>
+        <PackageTags>ffxiv;dalamud</PackageTags>
+        <PackageRequireLicenseAcceptance>False</PackageRequireLicenseAcceptance>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <VersionPrefix Condition="'$(Version)' == '' AND '$(VersionPrefix)' == ''">99.99.99</VersionPrefix>
+        <VersionSuffix Condition="'$(Version)' == '' AND '$(VersionSuffix)' == ''">alpha</VersionSuffix>
+        <_Version Condition="'$(Version)' != ''">$(Version)</_Version>
+        <_Version Condition="'$(Version)' == ''">$(VersionPrefix)-$(VersionSuffix)</_Version>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <RootNamespace>$(PackageId)</RootNamespace>
+        <TargetFrameworks>net5.0;netstandard2.0;net40</TargetFrameworks>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+        <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
+        <EnableDefaultBuildItems>false</EnableDefaultBuildItems>
+        <EnableDefaultContentItems>false</EnableDefaultContentItems>
+        <PackageOnlyBuild>true</PackageOnlyBuild>
+        <OutDir>..\..\out\$(_Version)\</OutDir>
+        <PackageOutputPath>..\..\out\$(_Version)\</PackageOutputPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="Sdk\**\*.props;Sdk\**\*.targets;Sdk\**\*.proj;Sdk\**\*.tasks;Sdk\**\*.items" Pack="true" PackagePath="Sdk\" />
+    </ItemGroup>
+
+    <Import Project="$(SolutionDir)MSBuild\MSBuild.Packaging.targets" />
+</Project>

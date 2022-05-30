@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <ItemGroup>
+        <PackageReference Include="ILRepack" Version="$(VersionILRepack)" GeneratePathProperty="True" />
+    </ItemGroup>
+
+    <Target Name="ILRepackFindDalamud">
+        <Error Text="Could not locate Dalamud dependencies at: $(DalamudHooksDir)"
+                File="$(MSBuildThisFileFullPath)"
+                Code="404"
+                Condition="!Exists('$(DalamudHooksDir)\Dalamud.dll')" />
+    </Target>
+
+    <Target Name="ILRepackFindBinary">
+        <PropertyGroup>
+            <ILRepackBinPath Condition="'$(ILRepackBinPath)' == ''">$(PkgILRepack)\tools\ILRepack.exe</ILRepackBinPath>
+        </PropertyGroup>
+        <Error Text="Could not locate ILRepack binary at: $(ILRepackBinPath)"
+                File="$(MSBuildThisFileFullPath)"
+                Code="404"
+                Condition="!Exists('$(ILRepackBinPath)')" />
+    </Target>
+
+    <Target Name="ILRepackConfigure" AfterTargets="ILRepackFindBinary">
+        <PropertyGroup>
+            <ILRepackOutputPath Condition="'$(ILRepackOutputPath)' == ''">$(OutDir)\$(AssemblyName).dll</ILRepackOutputPath>
+            <ILRepackOutputDir>$([System.IO.Directory]::GetParent("$(ILRepackOutputPath)"))</ILRepackOutputDir>
+            <ILRepackIntermediatePath Condition="'$(ILRepackIntermediatePath)' == ''">$(IntermediateOutputPath)packaged</ILRepackIntermediatePath>
+            <ILRepackLogPath Condition="'$(ILRepackLogPath)' == ''">$(IntermediateOutputPath)ILRepack.log</ILRepackLogPath>
+            <ILRepackDebug Condition="'$(ILRepackDebug)' == '' And '$(DebugSymbols.ToLowerInvariant())' == 'true'">true</ILRepackDebug>
+            <ILRepackAttributesPath Condition="'$(ILRepackAttributesPath)' == ''">$(IntermediateOutputPath)$(AssemblyName).dll</ILRepackAttributesPath>
+            <ILRepackInternalize Condition="'$(ILRepackInternalize)' == ''">true</ILRepackInternalize>
+            <ILRepackVerbose Condition="'$(ILRepackVerbose)' == '' And '$(ILRepackDebug)' == 'true'">true</ILRepackVerbose>
+            <ILRepackWildcards Condition="'$(ILRepackWildcards)' == ''">true</ILRepackWildcards>
+        </PropertyGroup>
+
+        <ItemGroup>
+            <ILRepackInput Include="$(OutDir)$(AssemblyName).dll" />
+            <ILRepackInput
+                    Include="@(ReferenceCopyLocalPaths->'$(OutDir)%(DestinationSubDirectory)%(Filename).dll')"
+                    Exclude="@(PackageReference->HasMetadata('Private')->WithMetadataValue('Private', 'False')->'$(OutDir)\%(Filename).dll')" />
+        </ItemGroup>
+    </Target>
+
+    <Target Name="ILRepackRun" AfterTargets="ILRepackFindDalamud;ILRepackConfigure">
+        <ItemGroup>
+            <ILRepackRunArgs Include="/log:&quot;$(ILRepackLogPath)&quot;" />
+            <ILRepackRunArgs Include="/ndebug" Condition="'$(ILRepackDebug)' != 'true'" />
+            <ILRepackRunArgs Include="/attr:&quot;$(ILRepackAttributesPath)&quot;" />
+            <ILRepackRunArgs Include="/lib:&quot;$(DalamudHooksDir)&quot;" />
+            <ILRepackRunArgs Include="/internalize" Condition="'$(ILRepackInternalize)' == 'true'" />
+            <ILRepackRunArgs Include="/out:&quot;$(ILRepackIntermediatePath)\$(AssemblyName).dll&quot;" />
+            <ILRepackRunArgs Include="/verbose" Condition="'$(ILRepackVerbose)' == 'true'" />
+            <ILRepackRunArgs Include="/wildcards" Condition="'$(ILRepackWildcards)' == 'true'" />
+            <ILRepackRunArgs Include="/parallel" />
+            <ILRepackRunArgs Include="/target:$(OutputType.ToLowerInvariant())" />
+        </ItemGroup>
+        <Exec Command="&quot;$(ILRepackBinPath)&quot; @(ILRepackRunArgs, ' ') @(ILRepackInput->Distinct(), ' ')" />
+    </Target>
+
+    <Target Name="ILRepackClean" AfterTargets="ILRepackRun">
+        <ItemGroup>
+            <ILRepackCleanIntermediateFiles Include="$(ILRepackIntermediatePath)\**\*.*" />
+
+            <ILRepackCleanFiles Include="@(ILRepackInput)" />
+            <ILRepackCleanFiles Include="@(ILRepackCleanIntermediateFiles->'$(OutPath)\%(RecursiveDir)%(Filename)%(Extension)')" />
+        </ItemGroup>
+        <Delete Files="@(ILRepackCleanFiles->Distinct())" />
+
+        <ItemGroup>
+            <ILRepackCleanDirectories
+                Include="$([System.IO.Directory]::GetDirectories('$(OutDir)%(DestinationSubDirectory)', '*', System.IO.SearchOption.AllDirectories))" />
+            <ILRepackCleanDirectories>
+                <Files>$([System.IO.Directory]::GetFiles("%(ILRepackCleanDirectories.Identity)", "*", System.IO.SearchOption.AllDirectories).get_Length())</Files>
+            </ILRepackCleanDirectories>
+        </ItemGroup>
+        <RemoveDir Directories="@(ILRepackCleanDirectories->Distinct())" Condition="%(Files) == '0'" />
+    </Target>
+
+    <ItemGroup>
+        <_ILRepackDependsOn Include="ILRepackFindDalamud" />
+        <_ILRepackDependsOn Include="ILRepackFindBinary" />
+        <_ILRepackDependsOn Include="ILRepackConfigure" />
+        <_ILRepackDependsOn Include="ILRepackRun" />
+        <_ILRepackDependsOn Include="ILRepackClean" />
+    </ItemGroup>
+
+    <Target Name="ILRepack" DependsOnTargets="@(_ILRepackDependsOn)" AfterTargets="Build">
+        <ItemGroup>
+            <_ILRepackMoveFiles Include="$(ILRepackIntermediatePath)\**\*.*" />
+        </ItemGroup>
+        <Copy
+            SourceFiles="@(_ILRepackMoveFiles)"
+            DestinationFiles="$(ILRepackOutputDir)\%(RecursiveDir)%(Filename)%(Extension)" />
+    </Target>
+</Project>

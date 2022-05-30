@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <VersionDalamudPackager>2.1.7</VersionDalamudPackager>
+        <VersionILRepack>2.1.0-beta1</VersionILRepack>
+        <VersionXivCommon>5.0.1-alpha.1</VersionXivCommon>
+        <VersionJetbrainsAnnotations>2022.1.0</VersionJetbrainsAnnotations>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <IncludeJetbrainsAnnotations>true</IncludeJetbrainsAnnotations>
+    </PropertyGroup>
+</Project>
