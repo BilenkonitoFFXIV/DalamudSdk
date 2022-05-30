@@ -1,4 +1,7 @@
-<Project Sdk="Microsoft.Build.NoTargets/3.2.14">
+<Project Sdk="Microsoft.Build.NoTargets/3.5.0">
+    <Import Project="..\MSBuild\MSBuildSdk.Packaging.props" />
+    <Import Project="..\MSBuild\DalamudSdk.GeneratePackageVersions.props" />
+
     <PropertyGroup>
         <ProductName>DalamudSDK</ProductName>
         <PackageId>DalamudSdk</PackageId>
@@ -20,19 +23,28 @@
     <PropertyGroup>
         <RootNamespace>$(PackageId)</RootNamespace>
         <TargetFrameworks>net5.0;netstandard2.0;net40</TargetFrameworks>
-        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
         <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
         <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
         <EnableDefaultBuildItems>false</EnableDefaultBuildItems>
         <EnableDefaultContentItems>false</EnableDefaultContentItems>
         <PackageOnlyBuild>true</PackageOnlyBuild>
+        <RestorePackagesConfig>true</RestorePackagesConfig>
+        <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
         <OutDir>..\..\out\$(_Version)\</OutDir>
         <PackageOutputPath>..\..\out\$(_Version)\</PackageOutputPath>
     </PropertyGroup>
 
     <ItemGroup>
-        <None Include="Sdk\**\*.props;Sdk\**\*.targets;Sdk\**\*.proj;Sdk\**\*.tasks;Sdk\**\*.items" Pack="true" PackagePath="Sdk\" />
+        <SDKSrc Include="Sdk\**\*.props" />
+        <SDKSrc Include="Sdk\**\*.targets" />
+        <SDKSrc Include="Sdk\**\*.proj" />
+        <SDKSrc Include="Sdk\**\*.tasks" />
+        <SDKSrc Include="Sdk\**\*.items" />
+
+        <SDKSrc Update="Sdk\dalamud\DalamudPackageVersions.props" Generated="True" />
     </ItemGroup>
 
-    <Import Project="$(SolutionDir)MSBuild\MSBuild.Packaging.targets" />
+    <Import Project="..\MSBuild\MSBuildSdk.Packaging.targets" />
+    <Import Project="..\MSBuild\DalamudSdk.GeneratePackageVersions.targets" />
 </Project>

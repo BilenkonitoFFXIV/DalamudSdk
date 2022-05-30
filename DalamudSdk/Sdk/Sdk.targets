@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <PropertyGroup>
         <LanguageTargets Condition=" '$(LanguageTargets)' == '' And '$(MSBuildProjectExtension)' != '.csproj' And '$(MSBuildProjectExtension)' != '.vbproj' And '$(MSBuildProjectExtension)' != '.fsproj' ">$(MSBuildToolsPath)\Microsoft.Common.targets</LanguageTargets>
         <MSBuildAllProjects Condition="'$(MSBuildToolsVersion)' != 'Current'">$(MSBuildAllProjects);$(MsBuildThisFileFullPath)</MSBuildAllProjects>
@@ -16,7 +16,7 @@
     <Import Project="$(DalamudSdkIncludePath)\dalamud\DalamudPlugin.targets"/>
     <Import Project="$(DalamudSdkIncludePath)\dalamud\DalamudDeps.targets"/>
     <Import Project="$(DalamudSdkIncludePath)\tools\ILRepack.targets" Condition="'$(IsDalamudPlugin)' == 'true'"/>
-    <Import Project="$(DalamudSdkIncludePath)\tools\DalamudPackager.targets" Condition="'$(IsDalamudPlugin)' == 'true' And '$(PackagePlugin)' == 'true'"/>
+    <Import Project="$(DalamudSdkIncludePath)\tools\DalamudPackager.targets" Condition="'$(IsDalamudPlugin)' == 'true'"/>
 
     <Import Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\Managed\Microsoft.Managed.DesignTime.targets" Condition="'$(DebuggerFlavor)' == '' And Exists('$(MSBuildExtensionsPath)\Microsoft\VisualStudio\Managed\Microsoft.Managed.DesignTime.targets')"/>
 

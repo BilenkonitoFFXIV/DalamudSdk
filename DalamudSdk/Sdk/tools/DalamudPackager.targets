@@ -1,34 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <ItemGroup>
-        <PackageReference Include="DalamudPackager" Version="$(VersionDalamudPackager)" />
+        <PackageReference Include="DalamudPackager" Version="$(VersionDalamudPackager)" >
+            <PrivateAssets>all</PrivateAssets>
+            <ExcludeAssets>build</ExcludeAssets>
+        </PackageReference>
     </ItemGroup>
 
-    <PropertyGroup>
-        <PackagerTargetFile />
-    </PropertyGroup>
-    <Target Name="DefaultDalamudPackagerDebug" />
-    <Target Name="DefaultDalamudPackagerRelease" />
+<!--    <PropertyGroup>-->
+<!--        <PackagerTargetFile />-->
+<!--    </PropertyGroup>-->
+<!--    <Target Name="DefaultDalamudPackagerDebug" />-->
+<!--    <Target Name="DefaultDalamudPackagerRelease" />-->
 
-    <Target Name="DalamudPackagerConfigure">
+    <Target Name="BeforeDalamudPackager" />
+
+    <Target Name="_ConfigureDalamudPackager">
         <PropertyGroup>
-            <DalamudPackagerOutputPath Condition="'$(DalamudPackagerOutputPath)' == ''">$(OutputPath)</DalamudPackagerOutputPath>
             <DalamudPackagerOutputName Condition="'$(DalamudPackagerOutputName)' == ''">$(AssemblyName)</DalamudPackagerOutputName>
+            <DalamudPackagerOutputPath Condition="'$(DalamudPackagerOutputPath)' == ''">$(OutputPath)</DalamudPackagerOutputPath>
+            <DalamudPackagerManifestType Condition="'$(DalamudPackagerManifestType)' == ''">auto</DalamudPackagerManifestType>
+            <DalamudPackagerVersionComponents Condition="'$(DalamudPackagerVersionComponents)' == ''">4</DalamudPackagerVersionComponents>
             <DalamudPackagerMakeZip Condition="'$(DalamudPackagerMakeZip)' == ''">true</DalamudPackagerMakeZip>
+            <DalamudPackagerHandleImages Condition="'$(DalamudPackagerHandleImages)' == ''">true</DalamudPackagerHandleImages>
+            <DalamudPackagerImagesPath Condition="'$(DalamudPackagerImagesPath)' == ''">images</DalamudPackagerImagesPath>
         </PropertyGroup>
     </Target>
 
-    <Target Name="DalamudPackagerRun">
+    <Target Name="_RunDalamudPackager">
+        <ItemGroup>
+            <_DalamudPackagerExclude
+                    Include="@(PackageReference->HasMetadata('Private')->WithMetadataValue('Private', 'False')->'$(OutDir)\%(RecursiveDir)%(Filename)%(Extension)')" />
+            <_DalamudPackagerExclude
+                    Include="@(RuntimePackAsset->'$(OutDir)\%(RecursiveDir)%(Filename)%(Extension)')" />
+            <_DalamudPackagerInput
+                    Include="@(ReferenceCopyLocalPaths->'$(OutDir)%(DestinationSubDirectory)%(Filename)%(Extension)')"
+                    Exclude="@(_DalamudPackagerExclude)" />
+        </ItemGroup>
         <DalamudPackager
+                AssemblyName="$(DalamudPackagerOutputName)"
                 ProjectDir="$(ProjectDir)"
                 OutputPath="$(DalamudPackagerOutputPath)"
-                AssemblyName="$(DalamudPackagerOutputName)"
-                MakeZip="$(DalamudPackagerMakeZip)" />
+                ManifestType="$(DalamudPackagerManifestType)"
+                VersionComponents="$(DalamudPackagerVersionComponents)"
+                MakeZip="$(DalamudPackagerMakeZip)"
+                HandleImages="$(DalamudPackagerHandleImages)"
+                ImagesPath="$(DalamudPackagerImagesPath)"
+                Include="@(_DalamudPackagerInput)" />
     </Target>
 
+    <Target Name="AfterDalamudPackager" />
+
     <ItemGroup>
-        <_DalamudPackagerDependsOn Include="DalamudPackagerConfigure" />
-        <_DalamudPackagerDependsOn Include="DalamudPackagerRun" />
+        <_DalamudPackagerDependsOn Include="BeforeDalamudPackager" />
+        <_DalamudPackagerDependsOn Include="_ConfigureDalamudPackager" Condition="'$(PackagePlugin)' == 'true'" />
+        <_DalamudPackagerDependsOn Include="_RunDalamudPackager" Condition="'$(PackagePlugin)' == 'true'" />
+        <_DalamudPackagerDependsOn Include="AfterDalamudPackager" />
     </ItemGroup>
-    <Target Name="DalamudPackager" DependsOnTargets="@(_DalamudPackagerDependsOn)" AfterTargets="Build;ILRepack" />
+    <Target Name="DalamudPackager"
+            DependsOnTargets="@(_DalamudPackagerDependsOn)"
+            AfterTargets="Build;ILRepack" />
 </Project>

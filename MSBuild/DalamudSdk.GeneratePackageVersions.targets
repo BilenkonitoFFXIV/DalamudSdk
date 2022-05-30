@@ -1,0 +1,82 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <ItemGroup>
+        <PackageReference Include="MSBuilder.CodeTaskAssembly" Version="0.2.6" PrivateAssets="All" />
+    </ItemGroup>
+    <Import Project=".\MSBuilder.ReadItemsFromFile.targets" />
+    <Import Project=".\MSBuilder.GetLatestVersion.targets" />
+    <Import Project=".\MSBuilder.WriteItemsToFile.targets" />
+
+    <Target Name="BeforeGenerateDalamudPackageVersions" />
+
+    <Target Name="_FilterInputDalamudPackageVersions" Outputs="@(SDKSrc)" Condition="'@(SDKSrc->HasMetadata('Generated')->WithMetadataValue('Generated', 'True')->Count())' > '0'">
+        <ItemGroup>
+            <_DalamudPackageVersionsInput Include="@(SDKSrc)" Condition="'%(SDKSrc.GeneratedPath)' != ''" />
+        </ItemGroup>
+    </Target>
+
+    <Target Name="_GetDalamudPackageVersions" Outputs="@(DalamudPackageVersion)" Condition="'@(_DalamudPackageVersionsInput->Count())' > '0'">
+        <Message Text="------- _GetDalamudPackageVersions:" Importance="high" />
+
+        <ReadItemsFromFile File="@(_DalamudPackageVersionsInput)">
+            <Output TaskParameter="Items" ItemName="DalamudPackageVersion" />
+        </ReadItemsFromFile>
+
+        <Message Text="@(_DalamudPackageVersionsInput->'%(Identity)')" Importance="high" />
+    </Target>
+
+    <Target Name="_ResolveDalamudPackageVersions" Outputs="%(DalamudPackageVersion.Identity)" Condition="'@(DalamudPackageVersion->Count())' > '0'">
+        <Message Text="------- _ResolveDalamudPackageVersions:" Importance="high" />
+
+        <GetLatestVersion PackageId="%(DalamudPackageVersion.Identity)" IncludePreRelease="%(DalamudPackageVersion.PreRelease)">
+            <Output TaskParameter="PackageVersion" PropertyName="_PackageVersion" />
+            <Output TaskParameter="Major" PropertyName="_Major" />
+            <Output TaskParameter="Minor" PropertyName="_Minor" />
+            <Output TaskParameter="Patch" PropertyName="_Patch" />
+        </GetLatestVersion>
+
+        <ItemGroup>
+            <DalamudPackageVersion Update="%(DalamudPackageVersion.Identity)">
+                <Version Condition="'$(_Major)' != '0' Or '$(_Minor)' != '0' Or '$(_Patch)' != '0'">$(_PackageVersion)</Version>
+                <PreRelease />
+            </DalamudPackageVersion>
+        </ItemGroup>
+
+        <Message Text="%(DalamudPackageVersion.Identity)%0A - Version: %(DalamudPackageVersion.Version)%0A - PreRelease: %(DalamudPackageVersion.PreRelease)"
+                 Importance="high" />
+    </Target>
+
+    <Target Name="_ExportDalamudPackageVersions"
+            Inputs="@(_DalamudPackageVersionsInput)"
+            Outputs="%(_DalamudPackageVersionsInput.GeneratedPath)"
+            Condition="'@(DalamudPackageVersion->Count())' > '0'">
+        <Message Text="------- _ExportDalamudPackageVersions:" Importance="high" />
+
+        <WriteItemsToFile
+                File="%(_DalamudPackageVersionsInput.GeneratedPath)"
+                Items="@(DalamudPackageVersion)"
+                ItemName="DalamudPackageVersion"
+                IncludeMetadata="true"
+                Overwrite="true" />
+
+        <Message Text="%(_DalamudPackageVersionsInput.Identity)%0A - FullPath: %(_DalamudPackageVersionsInput.FullPath)%0A - GeneratedPath: %(_DalamudPackageVersionsInput.GeneratedPath))"
+                 Importance="high" />
+    </Target>
+
+    <PropertyGroup>
+        <_GenerateDalamudPackageVersionsDependsOn>
+            BeforeGenerateDalamudPackageVersions;
+            _FilterInputDalamudPackageVersions;
+            _GetDalamudPackageVersions;
+            _ResolveDalamudPackageVersions;
+            _ExportDalamudPackageVersions;
+            AfterGenerateDalamudPackageVersions
+        </_GenerateDalamudPackageVersionsDependsOn>
+    </PropertyGroup>
+    <Target Name="GenerateDalamudPackageVersions"
+            DependsOnTargets="$(_GenerateDalamudPackageVersionsDependsOn)"
+            BeforeTargets="CoreCompile" />
+
+    <Target Name="AfterGenerateDalamudPackageVersions" />
+
+    <Import Project=".\MSBuild.Packaging.targets" />
+</Project>

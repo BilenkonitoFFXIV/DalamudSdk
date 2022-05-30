@@ -93,6 +93,5 @@
         </PropertyGroup>
     </Target>
 
-    <Import Project="$(MSBuildThisFileDirectory)\MSBuild.DevLocal.targets"
-            Condition="'$(PackagePublishLocal)' == 'true' AND '$(NugetTargetRepo)' != ''" />
+    <Import Project=".\MSBuild.DevLocal.targets" Condition="'$(PackagePublishLocal)' == 'true' AND '$(NugetTargetRepo)' != ''" />
 </Project>

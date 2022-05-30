@@ -1,0 +1,28 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <Target Name="_UpdateVisibleSDKSrc"
+           BeforeTargets="BeforeGenerateDalamudPackageVersions"
+           Outputs="%(SDKSrc.Identity)">
+       <ItemGroup>
+           <SDKSrc Update="@(SDKSrc)" Condition="'%(SDKSrc.Generated)' == 'True'">
+               <GeneratedPath>$(IntermediateOutputPath)Generated\$([MSBuild]::MakeRelative('$(MSBuildProjectDirectory)', '%(SDKSrc.FullPath)'))</GeneratedPath>
+           </SDKSrc>
+       </ItemGroup>
+   </Target>
+
+    <Target Name="_ResolveSDKSrc"
+            BeforeTargets="GenerateNuspec"
+            DependsOnTargets="GenerateDalamudPackageVersions"
+            Outputs="@(_PackageFiles)">
+        <ItemGroup>
+            <_PackageFiles Include="@(SDKSrc)" Condition="'%(SDKSrc.Pack)' == 'True' And '%(SDKSrc.Generated)' != 'True'">
+                <BuildAction Condition="'%(SDKSrc.BuildAction)' == ''">SDKSrc</BuildAction>
+                <PackagePath>%(SDKSrc.PackagePath)</PackagePath>
+            </_PackageFiles>
+
+            <_PackageFiles Include="%(SDKSrc.GeneratedPath)" Condition="'%(SDKSrc.Pack)' == 'True' And '%(SDKSrc.GeneratedPath)' != '' And Exists('%(SDKSrc.GeneratedPath)')">
+                <BuildAction Condition="'%(SDKSrc.BuildAction)' == ''">SDKSrc</BuildAction>
+                <PackagePath>%(SDKSrc.PackagePath)%(SDKSrc.RecursiveDir)</PackagePath>
+            </_PackageFiles>
+        </ItemGroup>
+    </Target>
+</Project>

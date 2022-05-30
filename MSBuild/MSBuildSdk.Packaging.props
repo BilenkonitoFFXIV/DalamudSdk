@@ -1,0 +1,11 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <ItemDefinitionGroup>
+        <SDKSrc>
+            <Generated>False</Generated>
+            <GeneratedPath />
+            <Visible>True</Visible>
+            <Pack>True</Pack>
+            <PackagePath>Sdk\</PackagePath>
+        </SDKSrc>
+    </ItemDefinitionGroup>
+</Project>

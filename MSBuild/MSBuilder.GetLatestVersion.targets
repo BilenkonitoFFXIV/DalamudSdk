@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+	The MIT License (MIT)
+
+	Copyright (c) 2016 Mobile Essentials
+
+	Permission is hereby granted, free of charge, to any person obtaining a copy
+	of this software and associated documentation files (the "Software"), to deal
+	in the Software without restriction, including without limitation the rights
+	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	copies of the Software, and to permit persons to whom the Software is
+	furnished to do so, subject to the following conditions:
+
+	The above copyright notice and this permission notice shall be included in all
+	copies or substantial portions of the Software.
+
+	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	SOFTWARE.
+-->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <UsingTask TaskName="GetLatestVersion" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
+        <ParameterGroup>
+            <IncludePreRelease ParameterType="System.Boolean" />
+            <PackageId Required="true" />
+            <PackageVersion Output="true" />
+            <SimpleVersion Output="true" />
+            <Major ParameterType="System.Int32" Output="true" />
+            <Minor ParameterType="System.Int32" Output="true" />
+            <Patch ParameterType="System.Int32" Output="true" />
+            <Release Output="true" />
+            <Build Output="true" />
+        </ParameterGroup>
+        <Task>
+            <Using Namespace="Microsoft.Build.Framework" />
+            <Using Namespace="Microsoft.Build.Utilities" />
+            <Using Namespace="System" />
+            <Using Namespace="System.Net" />
+            <Using Namespace="System.Text.RegularExpressions" />
+            <Using Namespace="System.Xml" />
+            <Using Namespace="System.Xml.Linq" />
+            <Using Namespace="System.Xml.XPath" />
+            <Code Type="Fragment" Language="cs">
+                <![CDATA[
+                    // https://www.nuget.org/api/v2/FindPackagesById()?$filter=IsLatestVersion&id='MSBuilder.Run'
+                    var url = string.Format("https://www.nuget.org/api/v2/FindPackagesById()?$filter={0}&id='{1}'",
+                        IncludePreRelease ? "IsAbsoluteLatestVersion" : "IsLatestVersion",
+                        PackageId);
+
+                    var xmlns = new XmlNamespaceManager(new NameTable());
+                    xmlns.AddNamespace("f", "http://www.w3.org/2005/Atom");
+                    xmlns.AddNamespace("d", "http://schemas.microsoft.com/ado/2007/08/dataservices");
+                    xmlns.AddNamespace("m", "http://schemas.microsoft.com/ado/2007/08/dataservices/metadata");
+
+                    // See: https://github.com/emgarten/NuGet.Packaging/blob/master/src/Versioning/Constants.cs
+                    // or https://github.com/NuGet/NuGet.Versioning/blob/master/src/Versioning/Constants.cs
+                    var semVer = new Regex(@"^(?<Version>\d+(\s*\.\s*\d+){0,3})(?<Release>-([0]\b|[0]$|[0][0-9]*[A-Za-z-]+|[1-9A-Za-z-][0-9A-Za-z-]*)+(\.([0]\b|[0]$|[0][0-9]*[A-Za-z-]+|[1-9A-Za-z-][0-9A-Za-z-]*)+)*)?(?<Metadata>\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$",
+                        RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture);
+
+                    try
+                    {
+                        Log.LogMessage(MessageImportance.Low, "Retrieving latest version metadata for package '{0}'.", PackageId);
+
+                        var doc = XDocument.Load(url);
+                        var nav = doc.CreateNavigator(xmlns.NameTable);
+                        var raw = (string)nav.Evaluate("string(/f:feed/f:entry/m:properties/d:Version/text())", xmlns);
+
+                        if (raw.Length == 0)
+                            raw = "0.0.0";
+
+                        var match = semVer.Match(raw);
+
+                        if (!match.Success)
+                        {
+                            Log.LogError("Retrieved version '{0}' is not a valid SemVer version.", raw);
+                            return false;
+                        }
+
+                        Log.LogMessage(MessageImportance.Low, "Retrieved version '{0}' for package '{1}'.", raw, PackageId);
+
+                        PackageVersion = raw;
+                        SimpleVersion = match.Groups["Version"].Value;
+
+                        var version = new Version(SimpleVersion);
+                        Major = version.Major;
+                        Minor = version.Minor;
+                        Patch = version.Build;
+
+                        if (match.Groups["Release"].Success)
+                            Release = match.Groups["Release"].Value;
+                        if (match.Groups["Metadata"].Success)
+                            Release = match.Groups["Metadata"].Value;
+                    }
+                    catch (Exception e)
+                    {
+                        Log.LogErrorFromException(e);
+                        return false;
+                    }
+				]]>
+            </Code>
+        </Task>
+    </UsingTask>
+</Project>
